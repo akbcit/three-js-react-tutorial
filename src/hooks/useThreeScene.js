@@ -1,31 +1,53 @@
-import { useRef, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import * as THREE from 'three';
 
 const useThreeScene = (width, height) => {
-
-  // Initialize the camera and scene here
   const canvasRef = useRef(null);
-  const sceneRef = useRef(new THREE.Scene()); 
+  const [scene, setScene] = useState(null);
+  const [camera, setCamera] = useState(null);
+  const [renderer, setRenderer] = useState(null);
 
   useEffect(() => {
-    // Create a camera
-    const camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
-    camera.position.z = 5;
+    if (!canvasRef.current) {
+      console.error("Canvas reference is not available.");
+      return;
+    }
 
-    // Create a renderer and attach it to the canvas
-    const renderer = new THREE.WebGLRenderer({ canvas: canvasRef.current });
-    renderer.setSize(width, height);
+    const initScene = new THREE.Scene();
+    const initCamera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
+    initCamera.position.z = 3;
 
-    // Render the scene
-    renderer.render(sceneRef.current, camera);
+    const initRenderer = new THREE.WebGLRenderer({ canvas: canvasRef.current, antialias: true });
+    initRenderer.setSize(width, height);
+    initRenderer.setPixelRatio(window.devicePixelRatio);
 
-    // Cleanup function to dispose of resources
+    setScene(initScene);
+    setCamera(initCamera);
+    setRenderer(initRenderer);
+
+    initRenderer.render(initScene, initCamera);
+
+    const handleResize = () => {
+      if (!initCamera || !initRenderer) {
+        console.error("Camera or renderer not initialized during resize.");
+        return;
+      }
+      initCamera.aspect = width / height;
+      initCamera.updateProjectionMatrix();
+      initRenderer.setSize(width, height);
+    };
+
+    window.addEventListener('resize', handleResize);
+
     return () => {
-      renderer.dispose();
+      window.removeEventListener('resize', handleResize);
+      if (initRenderer) {
+        initRenderer.dispose();
+      }
     };
   }, [width, height]);
 
-  return { canvasRef, scene: sceneRef.current };
+  return { canvasRef, scene, camera, renderer };
 };
 
 export default useThreeScene;
