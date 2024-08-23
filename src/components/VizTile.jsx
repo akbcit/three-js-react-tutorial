@@ -2,42 +2,48 @@
 import { useEffect } from "react";
 import * as THREE from "three";
 import useThreeScene from "../hooks/useThreeScene";
-import useAddLight from "../hooks/useAddLight";
 
 const VizTile = ({ height, width }) => {
   const { canvasRef, scene, camera, renderer } = useThreeScene(width, height);
 
-  useAddLight(scene, { color: 0xffffff, intensity: 1, position: [0, 0, 5] });
-
   useEffect(() => {
-    if (!renderer || !scene || !camera || !canvasRef.current) {
-      console.error("Initialization error: Renderer, scene, or camera not set up properly.");
-      return;
+    if (scene && camera && renderer) {
+      // Set scene background to black
+      scene.background = new THREE.Color(0x000000);
+
+      // Add a yellowish light like a bulb
+      const light = new THREE.PointLight(0xffd700, 1, 100);
+      light.position.set(0, 0, 5);
+      scene.add(light);
+
+      // Optionally add ambient light
+      const ambientLight = new THREE.AmbientLight(0x202020); // Dim ambient light
+      scene.add(ambientLight);
+
+      // Create a green cube
+      const geometry = new THREE.BoxGeometry(1, 1, 1);
+      const material = new THREE.MeshPhongMaterial({ color: 0x00ff00 });
+      const cube = new THREE.Mesh(geometry, material);
+      scene.add(cube);
+
+      const animate = () => {
+        requestAnimationFrame(animate);
+        cube.rotation.x += 0.01;
+        cube.rotation.y += 0.01;
+        renderer.render(scene, camera);
+      };
+
+      animate();
+
+      return () => {
+        geometry.dispose();
+        material.dispose();
+        scene.remove(cube);
+        scene.remove(light);
+        scene.remove(ambientLight);
+      };
     }
-
-    // Set scene background
-    scene.background = new THREE.Color(0xcccccc);
-
-    const geometry = new THREE.BoxGeometry(1, 1, 1);
-    const material = new THREE.MeshPhongMaterial({ color: 0x00ff00 });
-    const cube = new THREE.Mesh(geometry, material);
-    scene.add(cube);
-
-    const animate = () => {
-      requestAnimationFrame(animate);
-      cube.rotation.x += 0.01;
-      cube.rotation.y += 0.01;
-      renderer.render(scene, camera);
-    };
-
-    animate();
-
-    return () => {
-      geometry.dispose();
-      material.dispose();
-      scene.remove(cube);
-    };
-  }, [scene, camera, renderer, canvasRef]);
+  }, [scene, camera, renderer]);
 
   return (
     <div style={{ width: `${width}px`, height: `${height}px` }}>
