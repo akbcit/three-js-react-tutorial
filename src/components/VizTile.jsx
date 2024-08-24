@@ -2,6 +2,7 @@
 import { useEffect } from "react";
 import * as THREE from "three";
 import useThreeScene from "../hooks/useThreeScene";
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 
 const VizTile = ({ height, width }) => {
   const { canvasRef, scene, camera, renderer } = useThreeScene(width, height);
@@ -9,22 +10,23 @@ const VizTile = ({ height, width }) => {
   useEffect(() => {
     if (scene && camera && renderer) {
       // Set scene background to black
-      scene.background = new THREE.Color(0x000000);
+      scene.background = new THREE.Color(0xCCCCCC);
 
       // Add a yellowish light like a bulb
       const light = new THREE.PointLight(0xffd700, 1, 100);
-      light.position.set(0, 0, 5);
+      light.position.set(0, 0, 1);
       scene.add(light);
 
-      // Optionally add ambient light
-      const ambientLight = new THREE.AmbientLight(0x202020); // Dim ambient light
-      scene.add(ambientLight);
-
       // Create a green cube
-      const geometry = new THREE.BoxGeometry(1, 1, 1);
+      const geometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);
       const material = new THREE.MeshPhongMaterial({ color: 0x00ff00 });
       const cube = new THREE.Mesh(geometry, material);
       scene.add(cube);
+
+      // Add OrbitControls for zoom and pan
+      const controls = new OrbitControls(camera, renderer.domElement);
+      controls.enableZoom = true; // Enable zooming
+      controls.enablePan = true;  // Enable panning
 
       const animate = () => {
         requestAnimationFrame(animate);
@@ -38,9 +40,9 @@ const VizTile = ({ height, width }) => {
       return () => {
         geometry.dispose();
         material.dispose();
+        controls.dispose();
         scene.remove(cube);
         scene.remove(light);
-        scene.remove(ambientLight);
       };
     }
   }, [scene, camera, renderer]);
