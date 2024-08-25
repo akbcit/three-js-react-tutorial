@@ -1,11 +1,11 @@
 import './App.css'
-import VizTile from './components/VizTile'
+import ThreeJSBasics from './components/ThreeJSBasics'
 
 function App() {
 
   return (
     <main>
-      <VizTile height={600} width={600} />
+      <ThreeJSBasics height={600} width={600} />
     </main>
   )
 }
