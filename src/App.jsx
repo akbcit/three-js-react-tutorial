@@ -1,11 +1,12 @@
 import './App.css'
-import ThreeJSBasics from './components/ThreeJSBasics'
+// import ThreeJSBasics from './components/ThreeJSBasics';
+import Explorer from './components/Explorer'
 
 function App() {
 
   return (
     <main>
-      <ThreeJSBasics height={600} width={600} />
+      <Explorer height={600} width={600} />
     </main>
   )
 }

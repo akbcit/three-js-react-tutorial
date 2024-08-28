@@ -14,27 +14,83 @@ const ThreeJSBasics = ({ height, width }) => {
 
   useEffect(() => {
     if (scene && camera && renderer) {
-      // Set scene background to the expected color
+      // Set scene background to black
       scene.background = new THREE.Color("#000000");
 
-      // Create lights using the utility function
-      const pointLight = createLight("PointLight", {
-        color: "#6EACDA",
-        intensity: 0.5,
-        distance: 10,
-        position: [0, 0, 2],
-      });
-      scene.add(pointLight);
+      // Array of light configurations with added movement factors
+      const lightsConfig = [
+        {
+          type: "PointLight",
+          options: {
+            color: "#6EACDA", // Blue light
+            intensity: 0.5,
+            distance: 10,
+            position: [0, 0, 2],
+          },
+          xFactor: 2,
+          yFactor: 12,
+        },
+        {
+          type: "PointLight",
+          options: {
+            color: "#FFFF00", // Yellow light
+            intensity: 0.5,
+            distance: 10,
+            position: [2, 2, 2],
+          },
+          xFactor: 12,
+          yFactor: 2,
+        },
+        {
+          type: "PointLight",
+          options: {
+            color: "#FF0000", // Red light
+            intensity: 0.7,
+            distance: 12,
+            position: [-2, 0, 2],
+          },
+          xFactor: 3,
+          yFactor: 10,
+        },
+        {
+          type: "PointLight",
+          options: {
+            color: "#00FF00", // Green light
+            intensity: 0.6,
+            distance: 15,
+            position: [0, -2, 2],
+          },
+          xFactor: 8,
+          yFactor: 4,
+        },
+        {
+          type: "PointLight",
+          options: {
+            color: "#FF00FF", // Magenta light
+            intensity: 0.8,
+            distance: 8,
+            position: [1, 1, 3],
+          },
+          xFactor: 6,
+          yFactor: 6,
+        },
+      ];
 
+      // Create lights, add them to the scene, and store references
+      lightsConfig.forEach((lightConfig) => {
+        lightConfig.light = createLight(lightConfig.type, lightConfig.options);
+        scene.add(lightConfig.light);
+      });
+
+      // Create an ambient light for general illumination
       const ambientLight = createLight("AmbientLight", {
         color: "#c0c0c0",
         intensity: 1,
       });
-
       scene.add(ambientLight);
 
       // Create the geometry for the cuboid with rounded edges
-      const geometry = createCuboidGeometry(0.5, 0.5, 0.5, {
+      const geometry = createCuboidGeometry(0.5, 1, 0.01, {
         borderRadius: 0.05,
       });
 
@@ -50,19 +106,24 @@ const ThreeJSBasics = ({ height, width }) => {
         },
       });
 
+      // Create the mesh by combining geometry and material
+      const steelCuboid = new THREE.Mesh(geometry, material);
+      scene.add(steelCuboid);
+
       // Generate random spherical points using createRandomSphericalPoints utility
-      const randomSphericalPoints = createRandomSphericalPoints(1000, { radius: 2 });
+      const randomSphericalPoints = createRandomSphericalPoints(700, {
+        radius: 2,
+      });
 
       // For each spherical point, create a small steel sphere and add it to the scene
       randomSphericalPoints.forEach((point) => {
-
-        const sphereGeometry = createSphereGeometry(Math.random()*0.02, {
+        const sphereGeometry = createSphereGeometry(Math.random() * 0.02, {
           widthSegments: 32,
           heightSegments: 32,
         });
 
         const sphereMaterial = new THREE.MeshPhysicalMaterial({
-          color: "#c0c0c0" ,  
+          color: "#c0c0c0",
           metalness: 1,
           roughness: 0.4,
           clearcoat: 0.1,
@@ -74,38 +135,34 @@ const ThreeJSBasics = ({ height, width }) => {
         scene.add(sphere);
       });
 
-      // Create the mesh by combining geometry and material
-      const steelCuboid = new THREE.Mesh(geometry, material);
-      scene.add(steelCuboid);
-
       // Add OrbitControls for zoom and pan
       const controls = new OrbitControls(camera, renderer.domElement);
       controls.enableZoom = true;
       controls.enablePan = true;
 
+      // Animation loop for moving the lights and rendering the scene
       const animate = () => {
         requestAnimationFrame(animate);
-      
-        // Create a time-based variable for smooth movement
+
         const time = Date.now() * 0.001; // Get the time in seconds
-      
-        // Adjust the light's position with a sine function for smooth movement
-        pointLight.position.x = Math.sin(time/2) * 1; // Range [-1, 1]
-        pointLight.position.y = Math.cos(time/12) * 1; // Range [-1, 1]\
 
+        lightsConfig.forEach(({ light, xFactor, yFactor }) => {
+          light.position.x = Math.sin(time / xFactor) * 1;
+          light.position.y = Math.cos(time / yFactor) * 1;
+        });
 
-      
         renderer.render(scene, camera);
       };
 
       animate();
 
+      // Cleanup function to dispose of resources when the component unmounts
       return () => {
         steelCuboid.geometry.dispose();
         steelCuboid.material.dispose();
         controls.dispose();
+        lightsConfig.forEach(({ light }) => scene.remove(light));
         scene.remove(steelCuboid);
-        scene.remove(pointLight);
         scene.remove(ambientLight);
       };
     }
